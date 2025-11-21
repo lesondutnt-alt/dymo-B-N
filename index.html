@@ -1,89 +1,96 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta charset="UTF-8">
-<title>Dymo Blanc sur Noir</title>
+<title>Dymo Blanc sur Noir – Dernière utilisation</title>
 
 <style>
     body {
         font-family: Arial, sans-serif;
-        padding: 10px;
-        background: #fafafa;
-        margin: 0;
-    }
-
-    h2 { text-align: center; margin-bottom: 15px; }
-
-    .card {
-        background: white;
-        border-radius: 10px;
         padding: 15px;
-        margin-bottom: 18px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        background: #121212; /* fond sombre */
+        color: #ffffff;       /* texte blanc */
     }
-
-    label { 
-        font-weight: bold; 
-        display: block;
-        margin-top: 10px;
-    }
-
-    select, button, input[type="text"] {
-        width: 100%;
-        padding: 14px;
-        margin-top: 6px;
+    .card {
+        background: #1e1e1e; /* carte légèrement plus claire */
         border-radius: 8px;
-        border: 1px solid #ccc;
-        font-size: 18px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
-
+    label { font-weight: bold; }
+    select, button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border-radius: 6px;
+        border: 1px solid #444;
+        font-size: 16px;
+        background: #2c2c2c;
+        color: #fff;
+    }
     button {
-        background: #007BFF;
+        background: #4caf50;
         color: white;
         border: none;
-        margin-top: 14px;
-        cursor: pointer;
-        font-size: 18px;
-        font-weight: bold;
     }
-
-    button:active {
-        background: #005FCC;
-    }
-
     #lastInfo {
-        font-size: 20px;
+        font-size: 18px;
         margin-top: 10px;
-        color: #333;
-    }
-
-    #history {
-        max-height: 350px;
-        overflow-y: auto;
-        padding-right: 5px;
-    }
-
-    .history-item {
-        padding: 10px 0;
-        border-bottom: 1px solid #e5e5e5;
-        font-size: 17px;
-    }
-
-    .history-item small {
-        font-size: 14px;
-        color: #666;
+        color: #ddd;
     }
 </style>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- Firebase App & Database SDKs -->
+<script type="module">
+  // Import Firebase modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+  // 🔥 Configuration Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCoTqBIbuO0EeGXHnVAFGr6kfMk9DlLU9M",
+    authDomain: "dymo-blanc-sur-noir.firebaseapp.com",
+    databaseURL: "https://dymo-blanc-sur-noir-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "dymo-blanc-sur-noir",
+    storageBucket: "dymo-blanc-sur-noir.firebasestorage.app",
+    messagingSenderId: "713858832334",
+    appId: "1:713858832334:web:f51e42bebfbde9441afd9f"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+
+  // ⏳ Affichage en temps réel
+  const lastRef = ref(database, 'dymoBlancNoir/last');
+  onValue(lastRef, (snapshot) => {
+      const data = snapshot.val();
+      const lastInfo = document.getElementById('lastInfo');
+      if(data){
+          lastInfo.innerHTML = `<strong>${data.user}</strong> à <strong>${data.place}</strong><br><small>${data.time}</small>`;
+      } else {
+          lastInfo.innerHTML = "Aucune information encore.";
+      }
+  });
+
+  // 💾 Fonction pour enregistrer les données
+  window.saveInfo = function() {
+      const user = document.getElementById("user").value;
+      const place = document.getElementById("place").value;
+      const time = new Date().toLocaleString("fr-FR");
+
+      set(lastRef, { user, place, time })
+        .then(() => alert("Information mise à jour !"))
+        .catch((error) => alert("Erreur : " + error));
+  }
+</script>
 
 </head>
 <body>
 
-<h2>Dymo Blanc sur Noir</h2>
+<h2>Dymo Blanc sur Noir – Dernière utilisation</h2>
 
 <div class="card">
     <h3>Dernière info :</h3>
@@ -94,7 +101,7 @@
     <h3>Mettre à jour</h3>
 
     <label>Utilisateur :</label>
-    <select id="user" onchange="toggleUserOther()">
+    <select id="user">
         <option>Sébastien</option>
         <option>Cyril</option>
         <option>Claire</option>
@@ -112,10 +119,8 @@
         <option>Autre</option>
     </select>
 
-    <input type="text" id="userOther" placeholder="Nom de l'utilisateur" style="display:none;">
-
     <label>Lieu :</label>
-    <select id="place" onchange="togglePlaceOther()">
+    <select id="place">
         <option>Bureau de régisseurs</option>
         <option>Atelier lumière</option>
         <option>Studio son</option>
@@ -126,97 +131,8 @@
         <option>Autre</option>
     </select>
 
-    <input type="text" id="placeOther" placeholder="Nom du lieu" style="display:none;">
-
     <button onclick="saveInfo()">Enregistrer</button>
 </div>
-
-<div class="card">
-    <h3>Derniers utilisateurs (10 max)</h3>
-    <div id="history">Chargement…</div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAvATGSHSN_JCZJQByxjuVFrDyyrCly264",
-        authDomain: "dymo-tc.firebaseapp.com",
-        databaseURL: "https://dymo-tc-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "dymo-tc",
-        storageBucket: "dymo-tc.firebasestorage.app",
-        messagingSenderId: "905599820204",
-        appId: "1:905599820204:web:a529f644d2fbaa51379a09"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // Afficher / masquer champ "Autre"
-    function toggleUserOther() {
-        document.getElementById("userOther").style.display =
-            document.getElementById("user").value === "Autre" ? "block" : "none";
-    }
-    function togglePlaceOther() {
-        document.getElementById("placeOther").style.display =
-            document.getElementById("place").value === "Autre" ? "block" : "none";
-    }
-
-    // Dernière info
-    db.ref("dymo/last").on("value", snapshot => {
-        const data = snapshot.val();
-        if (data) {
-            document.getElementById("lastInfo").innerHTML =
-                `<strong>${data.user}</strong> à <strong>${data.place}</strong><br>
-                 <small>${data.time}</small>`;
-        }
-    });
-
-    // Historique limité à 10
-    function loadHistory() {
-        db.ref("dymo/history").once("value", snapshot => {
-            const records = snapshot.val();
-            const container = document.getElementById("history");
-            container.innerHTML = "";
-
-            if (!records) {
-                container.innerHTML = "Aucun historique.";
-                return;
-            }
-
-            const list = Object.entries(records).map(([key, val]) => ({ key, ...val }))
-                .sort((a, b) => new Date(b.time) - new Date(a.time));
-
-            if (list.length > 10) {
-                list.slice(10).forEach(entry => db.ref("dymo/history/" + entry.key).remove());
-            }
-
-            list.slice(0, 10).forEach(entry => {
-                container.innerHTML += `
-                    <div class="history-item">
-                        <strong>${entry.user}</strong> — ${entry.place}<br>
-                        <small>${entry.time}</small>
-                    </div>`;
-            });
-        });
-    }
-
-    db.ref("dymo/history").on("value", loadHistory);
-
-    // Sauvegarde
-    function saveInfo() {
-        let user = document.getElementById("user").value;
-        if (user === "Autre") user = document.getElementById("userOther").value || "Inconnu";
-
-        let place = document.getElementById("place").value;
-        if (place === "Autre") place = document.getElementById("placeOther").value || "Inconnu";
-
-        const time = new Date().toLocaleString("fr-FR");
-
-        db.ref("dymo/last").set({ user, place, time });
-        db.ref("dymo/history").push().set({ user, place, time });
-
-        alert("Information enregistrée !");
-    }
-</script>
 
 </body>
 </html>
